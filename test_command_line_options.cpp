@@ -4,8 +4,6 @@
 
 using namespace std;
 
-#include "myclass.h" // todo - remove
-
 /*
 static struct option longOptions[] = {{"run", required_argument, 0, 'r'},
                                       {"stations", required_argument, 0, 's'},
@@ -25,8 +23,10 @@ int main(int argc, char *const argv[]) {
   option_description<int> trucks("trucks - int", "trucks", 't', required_argument, 0);
   option_description<string> run("run - string", "run", 'r', required_argument, "");
   option_description<double> station("stations - string", "stations", 's', required_argument, 2.0);
+  cout << "station = " << station.get_value() << endl;
 
   command_line options(argc, argv, usage, description, example, {&station, &run, &trucks});
+  cout << "station = " << station.get_value() << endl;
 
   return EXIT_SUCCESS;
 }

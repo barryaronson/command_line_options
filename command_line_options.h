@@ -42,6 +42,7 @@ public:
     std::istringstream iss(str);
     iss >> argument_value;
   }
+  T get_value() { return argument_value; }
 
 private:
   T argument_value;
