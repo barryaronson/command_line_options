@@ -13,18 +13,19 @@ template <typename T> T string_to(const char *str) {
   return result;
 }
 
-class option_value : public option {
+class option_generic : public option /* 'option' is from 'getopt.h' */ {
 public:
-  option_value(const char *long_option, int short_option, int argument_required)
-      : option{long_option, argument_required, nullptr, short_option} {}
+  option_generic(const char *help, const char *long_option, int short_option, int argument_required)
+      : help_string(help), option{long_option, argument_required, nullptr, short_option} {}
   virtual void set_value(const char *str) = 0;
+  const char *help_string;
 };
 
-template <typename T = int> class option_description : public option_value {
+template <typename T = int> class option_description : public option_generic {
 public:
   /*! \fn option_description::option_description()
       \brief Represents an individual command line option.
-      \param help_string As passed to programe.
+      \param help Brief description of option
       \param long_option Long option name
       \param short_option Short option character or unique value
       \param argument_required
@@ -33,11 +34,13 @@ public:
       // or optional_argument (or 2)
       \return Nothing
   */
-  option_description(const char *help_string, const char *long_option, int short_option,
+  option_description(const char *help, const char *long_option, int short_option,
                      int argument_required, T default_value)
-      : option_value(long_option, short_option, argument_required) {
+      : option_generic(help, long_option, short_option, argument_required) {
     argument_value = default_value;
   };
+  option_description(const char *help, const char *long_option, int short_option)
+      : option_description(help, long_option, short_option, no_argument, 0) {}
   void set_value(const char *str) {
     std::istringstream iss(str);
     iss >> argument_value;
@@ -62,15 +65,19 @@ public:
       \param usage An array of usages without the program name terminated by a NULL pointer.
       \param description Displayed after usages.
       // Note: See class option_description for option descriptions
-      \param example An array of example terminated by a NULL pointer.
+      \param example An array of examples terminated by a NULL pointer.
       \return Nothing
   */
   command_line(int argc, char *const argv[], const char *usage[], const char *description,
-               const char *example[], std::initializer_list<option_value *> values);
+               const char *example[], std::initializer_list<option_generic *> values);
+
+  void build_help_msg(char *const argv[], const char *usage[], const char *description,
+                      const char *example[], std::initializer_list<option_generic *> values);
   void help();
 
 private:
   auto find_option(int short_option);
   void convert_options_to_strings(char *short_options, option *long_options);
-  std::vector<option_value *> value_list;
+  std::vector<option_generic *> value_list;
+  std::string help_msg;
 };

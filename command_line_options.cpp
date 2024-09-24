@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <getopt.h>
 #include <iostream>
 #include <stdexcept>
@@ -15,11 +16,63 @@ auto command_line::find_option(int short_option) {
   throw std::runtime_error("Unknown short option.\n");
 }
 
+void command_line::build_help_msg(char *const argv[], const char *usage[], const char *description,
+                                  const char *example[],
+                                  std::initializer_list<option_generic *> values) {
+  // add usage
+  help_msg += "Usage:\t";
+  std::filesystem::path p(argv[0]);
+  if (usage) {
+    for (int i = 0; usage[i]; ++i) {
+      if (i > 0) {
+        help_msg += '\t';
+      }
+      help_msg += p.filename();
+      help_msg += ' ';
+      help_msg += usage[i];
+      help_msg += "\n";
+    }
+  }
+
+  // add description
+  if (description) {
+    help_msg += description;
+    help_msg += "\n";
+  }
+  // Example: helium
+  //  add example
+  if (example) {
+    for (int i = 0; example[i]; ++i) {
+      if (i == 0) {
+        help_msg += "Example:\t";
+      } else {
+        help_msg += '\t';
+      }
+      help_msg += p.filename();
+      help_msg += ' ';
+      help_msg += example[i];
+      help_msg += "\n";
+    }
+  }
+
+  // add option descriptions
+  help_msg += "\n";
+  for (auto v : value_list) {
+    help_msg += '-';
+    help_msg += v->val;
+    help_msg += ", --";
+    help_msg += v->name;
+    help_msg += '\t';
+    help_msg += v->help_string;
+    help_msg += "\n";
+  }
+}
+
 command_line::command_line(int argc, char *const argv[], const char *usage[],
                            const char *description, const char *example[],
-                           std::initializer_list<option_value *> values)
-    : value_list(values) {
-
+                           std::initializer_list<option_generic *> values)
+    : help_msg(""), value_list(values) {
+  build_help_msg(argv, usage, description, example, values);
   // synthesize the arguments to 'getopt_long()'
   const size_t values_size = values.size();
   char *short_options = new char[(values_size * 3) + 1]; // 3 for optional arguments (e.g., "o::")
@@ -64,6 +117,8 @@ void command_line::convert_options_to_strings(char *short_options, option *long_
 }
 
 void command_line::help() {
+  std::cout << help_msg;
+#if 0
   std::cout << "Usage: helium [OPTION]...\n"
                "Lunar mining simulator\n"
                "Example: helium -t 10 -s 2\n"
@@ -75,5 +130,6 @@ void command_line::help() {
                "-t, --trucks=NUM    number of trucks to be used in the "
                "simulation (default = 50, valid values are 1 to 1250)\n"
                "-h, --help\n";
+#endif
   exit(EXIT_SUCCESS);
 }
