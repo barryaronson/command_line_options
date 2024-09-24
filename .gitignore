@@ -1,3 +1,10 @@
+CMakeFiles/
+.vscode/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+clo
+
 # Prerequisites
 *.d
 
