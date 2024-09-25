@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <filesystem>
 #include <getopt.h>
 #include <sstream>
@@ -8,9 +9,21 @@
 
 namespace command_line_options {
 
+class option_ID {
+public:
+  int operator()() { return option_ID_counter++; } // call operator
+private:
+  static int option_ID_counter;
+};
+
+#ifndef COMMAND_LINE_OPTIONS_OPTION_ID_COUNTER
+#define COMMAND_LINE_OPTIONS_OPTION_ID_COUNTER
+int option_ID::option_ID_counter = 0x100; // leaves room for the single character options
+#endif
+
 class option_generic : public option /* 'option' is from 'getopt.h' */ {
 public:
-  option_generic(const char *help, const char *long_option, int short_option, int argument_required)
+  option_generic(int short_option, const char *long_option, const char *help, int argument_required)
       : help_string(help), present(false),
         option{long_option, argument_required, nullptr, short_option} {}
   virtual void set_value(const char *str) = 0;
@@ -20,24 +33,36 @@ public:
 
 template <typename T = int> class option_description : public option_generic {
 public:
-  /*! \fn option_description::option_description()
-      \brief Represents an individual command line option.
-      \param help Brief description of option
-      \param long_option Long option name
-      \param short_option Short option character or unique value
-      \param argument_required
-      // no_argument (or 0) if the option does not take an argument;
-      // required_argument (or 1) if the option requires an argument;
-      // or optional_argument (or 2)
+  /*! \fn option_description::option_description(int short_option, const char *long_option, const
+     char *help, int argument_required, T default_value)
+     \brief Represents an individual command line option with argument or optional argument.
+     \param short_option Short option character or 0 for no short option
+     \param long_option Long option name
+     \param help Brief description of option
+     \param argument_required
+      // 'no_argument' (or 0) if the option does not take an argument;
+      // 'required_argument' (or 1) if the option requires an argument;
+      // or 'optional_argument' (or 2)
+      \param default_value Default value of option argument
       \return Nothing
   */
-  option_description(const char *help, const char *long_option, int short_option,
+  option_description(int short_option, const char *long_option, const char *help,
                      int argument_required, T default_value)
-      : option_generic(help, long_option, short_option, argument_required) {
+      : option_generic((short_option == 0) ? option_ID()() : short_option, long_option, help,
+                       argument_required) {
     argument_value = default_value;
   };
-  option_description(const char *help, const char *long_option, int short_option)
-      : option_description(help, long_option, short_option, no_argument, 0) {}
+
+  /*! \fn option_description::option_description(int short_option, const char *long_option, const
+     char *help)
+      \brief Represents an individual command line option with no argument.
+      \param short_option Short option character or 0 for no short option
+      \param long_option Long option name
+      \param help Brief description of option
+      \return Nothing
+  */
+  option_description(int short_option, const char *long_option, const char *help)
+      : option_description(short_option, long_option, help, no_argument, 0) {}
   void set_value(const char *str) {
     std::istringstream iss(str);
     iss >> argument_value;
@@ -51,21 +76,23 @@ private:
 /*! \class command_line
     \brief Parses command line options.
 
-    Each attribute string is mapped to a unique enum Attribute.
+    If a command line option is present, its presence is stored in the corresponding object from
+   'values' along with its argument (if present).
 */
 class command_line {
 public:
   /*! \fn command_line::command_line()
       \brief Parses command line tokens and interprets values.
-      \param argc As passed to programe.
-      \param argv As passed to programe.
+      \param argc As passed to program.
+      \param argv As passed to program.
       \param usage An array of usages without the program name terminated by a NULL pointer.
       \param description Displayed after usages.
       // Note: See class option_description for option descriptions
       \param example An array of examples terminated by a NULL pointer.
+      \param values List of allowed options as described by 'option_description',
+      which inherits from 'option_generic'
       \return Nothing
   */
-
   command_line(int argc, char *const argv[], const char *usage[], const char *description,
                const char *example[], std::initializer_list<option_generic *> values)
       : help_msg(""), value_list(values) {
@@ -83,6 +110,26 @@ public:
 
     delete long_options;
     delete short_options;
+  }
+
+  auto find_short_option(int short_option) {
+    for (auto v : value_list) {
+      if (v->val == short_option) {
+        return v;
+      }
+    }
+
+    throw std::runtime_error("Unknown short option.\n");
+  }
+
+  auto find_long_option(const char *long_option) {
+    for (auto v : value_list) {
+      if (strcmp(v->name, long_option) == 0) {
+        return v;
+      }
+    }
+
+    throw std::runtime_error("Unknown long option.\n");
   }
 
   std::string &help() { return help_msg; }
@@ -138,15 +185,7 @@ private:
       help_msg += "\n";
     }
   }
-  auto find_option(int short_option) {
-    for (auto v : value_list) {
-      if (v->val == short_option) {
-        return v;
-      }
-    }
 
-    throw std::runtime_error("Unknown short option.\n");
-  }
   void convert_options_to_strings(char *short_options, option *long_options) {
     int short_index = 0;
     int long_index = 0;
@@ -179,7 +218,10 @@ private:
     while ((c = getopt_long(argc, argv, short_options, long_options,
                             &optionIndex)) != -1) // -1 = end of mOptions
     {
-      auto option = find_option(c); // get the option description
+      if (c == 0) {
+        std::cout << "c == 0\n";
+      }
+      auto option = find_short_option(c); // get the option description
 
       option->present = true; // option was present on command line
 
