@@ -3,22 +3,18 @@
 #include <getopt.h>
 #include <sstream>
 #include <string>
-#include <type_traits>
 #include <vector>
 
-template <typename T> T string_to(const char *str) {
-  std::istringstream iss(str);
-  T result;
-  iss >> result;
-  return result;
-}
+namespace command_line_options {
 
 class option_generic : public option /* 'option' is from 'getopt.h' */ {
 public:
   option_generic(const char *help, const char *long_option, int short_option, int argument_required)
-      : help_string(help), option{long_option, argument_required, nullptr, short_option} {}
+      : help_string(help), present(false),
+        option{long_option, argument_required, nullptr, short_option} {}
   virtual void set_value(const char *str) = 0;
   const char *help_string;
+  bool present;
 };
 
 template <typename T = int> class option_description : public option_generic {
@@ -71,13 +67,16 @@ public:
   command_line(int argc, char *const argv[], const char *usage[], const char *description,
                const char *example[], std::initializer_list<option_generic *> values);
 
-  void build_help_msg(char *const argv[], const char *usage[], const char *description,
-                      const char *example[], std::initializer_list<option_generic *> values);
-  void help();
+  std::string &help() { return help_msg; }
 
 private:
+  void build_help_msg(char *const argv[], const char *usage[], const char *description,
+                      const char *example[], std::initializer_list<option_generic *> values);
   auto find_option(int short_option);
   void convert_options_to_strings(char *short_options, option *long_options);
+  void parse_options(int argc, char *const argv[], char *short_options, option *long_options);
   std::vector<option_generic *> value_list;
   std::string help_msg;
 };
+
+} // namespace command_line_options
