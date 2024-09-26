@@ -31,11 +31,14 @@ int main(int argc, char *const argv[]) {
       0, "long-only", "=NUM\t\tLong option only with integer argument", required_argument, 0);
   option_description help('h', "help", "\t\tHelp");
 
-  command_line options(
+  help_message help_msg(
       argc, argv, usage, description, example,
       {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &help});
+
+  const command_line options(
+      argc, argv, {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &help});
   if (help.present) {
-    cout << options.help() << endl;
+    cout << help_msg.help() << endl;
   } else {
     cout << "int_arg = " << int_arg.get_value() << endl;
     cout << "string_arg = " << string_arg.get_value() << endl;
