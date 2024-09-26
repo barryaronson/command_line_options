@@ -12,33 +12,31 @@ void print_option(option_generic *lo) {
 }
 
 int main(int argc, char *const argv[]) {
+  option_description<int> int_arg('n', "number", required_argument, 0,
+                                  "=NUM\tOption with integer argument");
+  option_description<string> string_arg('s', "string", required_argument, "default",
+                                        "=STRING\tOption with string argument");
+  option_description<double> double_arg('d', "double", required_argument, 3.141,
+                                        "=NUM\tOption with double argument");
+  option_description<int> opt_int_arg('o', "optional", optional_argument, 1,
+                                      "[=NUM]\tOption with optional int argument");
+  option_description<int> int_arg_long_only(0, "long-only", required_argument, 0,
+                                            "=NUM\t\tLong option only with integer argument");
+  option_description help('h', "help", "\t\tHelp");
+
+  const command_line options(
+      argc, argv, {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &help});
+
   const char *usage[] = {"[OPTION]...", "--help", nullptr};
   const char *description = "Test harness for 'command_line_options' classes";
   const char *example[] = {"-n 10 -s string --double=3.141 -o4\n"
                            "Note no space allowed for short options "
                            "with optional arguments",
                            nullptr};
+  help_message help_msg(argc, argv, usage, description, example, options);
 
-  option_description<int> int_arg('n', "number", "=NUM\tOption with integer argument",
-                                  required_argument, 0);
-  option_description<string> string_arg('s', "string", "=STRING\tOption with string argument",
-                                        required_argument, "default");
-  option_description<double> double_arg('d', "double", "=NUM\tOption with double argument",
-                                        required_argument, 3.141);
-  option_description<int> opt_int_arg('o', "optional", "[=NUM]\tOption with optional int argument",
-                                      optional_argument, 1);
-  option_description<int> int_arg_long_only(
-      0, "long-only", "=NUM\t\tLong option only with integer argument", required_argument, 0);
-  option_description help('h', "help", "\t\tHelp");
-
-  help_message help_msg(
-      argc, argv, usage, description, example,
-      {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &help});
-
-  const command_line options(
-      argc, argv, {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &help});
   if (help.present) {
-    cout << help_msg.help() << endl;
+    cout << help_msg << endl;
   } else {
     cout << "int_arg = " << int_arg.get_value() << endl;
     cout << "string_arg = " << string_arg.get_value() << endl;
