@@ -24,11 +24,11 @@ int option_ID::option_ID_counter = 0x100; // leaves room for the single characte
 class option_generic : public option /* 'option' is from 'getopt.h' */ {
 public:
   option_generic(int short_option, const char *long_option, const char *help, int argument_required)
-      : help_string(help), present(false),
+      : help_string(help), present(0),
         option{long_option, argument_required, nullptr, short_option} {}
   virtual void set_value(const char *str) = 0;
   const char *help_string;
-  bool present;
+  int present;
 };
 
 template <typename T = int> class option_description : public option_generic {
@@ -190,25 +190,28 @@ private:
     int short_index = 0;
     int long_index = 0;
 
-    for (auto v : value_list) {
+    for (auto v : value_list) { // go through all option objects and build input to getopt_long()
       const option *o = (option *)v;
-      short_options[short_index++] = o->val; // short option letter
-      switch (o->has_arg) {
-      case optional_argument: // short option letter followed by '::'
-        short_options[short_index++] = ':';
-      case required_argument: // short option letter followed by ':'
-        short_options[short_index++] = ':';
-      case no_argument:
-        break;
-      default:
-        throw std::runtime_error("Invalid argument option\n");
-        break;
+      if (o->val < 256) {                      // otherwise, it only has a long option
+        short_options[short_index++] = o->val; // short option letter
+        switch (o->has_arg) {
+        case optional_argument: // short option letter followed by '::' for optional argument
+          short_options[short_index++] = ':';
+        case required_argument: // short option letter followed by ':' for mandatory argument
+          short_options[short_index++] = ':';
+        case no_argument: // short option letter only (no argument); no ':' or '::'
+          break;
+        default:
+          throw std::runtime_error("Invalid argument option\n");
+          break;
+        }
       }
       long_options[long_index++] = *o;
     }
 
     short_options[short_index] = '\0';
     long_options[long_index] = {0, 0, 0, 0};
+    // these should now conform to what is required by 'getopt_long()'
   }
 
   void parse_options(int argc, char *const argv[], char *short_options, option *long_options) {
@@ -218,12 +221,9 @@ private:
     while ((c = getopt_long(argc, argv, short_options, long_options,
                             &optionIndex)) != -1) // -1 = end of mOptions
     {
-      if (c == 0) {
-        std::cout << "c == 0\n";
-      }
       auto option = find_short_option(c); // get the option description
 
-      option->present = true; // option was present on command line
+      option->present = 1; // option was present on command line
 
       switch (option->has_arg) { // set the option argument value if necessary
       case no_argument:
