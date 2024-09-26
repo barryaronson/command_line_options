@@ -8,7 +8,7 @@ using namespace command_line_options;
 void print_option(option_generic *lo) {
   cout << "flag = " << lo->flag << "\thas_arg = " << lo->has_arg
        << "\thelp_string = " << lo->help_string << "\tname = " << lo->name
-       << "\tpresent = " << lo->present << "val = " << lo->val << endl;
+       << "\tpresent = " << lo->present << "\tval = " << lo->val << endl;
 }
 
 int main(int argc, char *const argv[]) {
@@ -28,13 +28,13 @@ int main(int argc, char *const argv[]) {
   option_description<int> opt_int_arg('o', "optional", "[=NUM]\tOption with optional int argument",
                                       optional_argument, 1);
   option_description<int> int_arg_long_only(
-      0, "long-only", "=NUM\tLong option only with integer argument", required_argument, 0);
+      0, "long-only", "=NUM\t\tLong option only with integer argument", required_argument, 0);
   option_description help('h', "help", "\t\tHelp");
 
   command_line options(
       argc, argv, usage, description, example,
       {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &help});
-  if (help.present != 0) {
+  if (help.present) {
     cout << options.help() << endl;
   } else {
     cout << "int_arg = " << int_arg.get_value() << endl;
@@ -45,7 +45,7 @@ int main(int argc, char *const argv[]) {
 
     auto lo = options.find_long_option(("double"));
     print_option(lo);
-    auto so = options.find_short_option('d');
+    auto so = options.find_short_option('n');
     print_option(so);
   }
 

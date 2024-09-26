@@ -24,11 +24,11 @@ int option_ID::option_ID_counter = 0x100; // leaves room for the single characte
 class option_generic : public option /* 'option' is from 'getopt.h' */ {
 public:
   option_generic(int short_option, const char *long_option, const char *help, int argument_required)
-      : help_string(help), present(0),
+      : help_string(help), present(false),
         option{long_option, argument_required, nullptr, short_option} {}
   virtual void set_value(const char *str) = 0;
   const char *help_string;
-  int present;
+  bool present;
 };
 
 template <typename T = int> class option_description : public option_generic {
@@ -177,9 +177,13 @@ private:
     // add option descriptions
     help_msg += "\nMandatory arguments to long options are mandatory for short options too.\n";
     for (auto v : value_list) {
-      help_msg += '-';
-      help_msg += v->val;
-      help_msg += ", --";
+      if (v->val < 256) { // has short option
+        help_msg += '-';
+        help_msg += v->val;
+        help_msg += ", --";
+      } else { // has long option only
+        help_msg += "--";
+      }
       help_msg += v->name;
       help_msg += v->help_string;
       help_msg += "\n";
@@ -223,7 +227,7 @@ private:
     {
       auto option = find_short_option(c); // get the option description
 
-      option->present = 1; // option was present on command line
+      option->present = true; // option was present on command line
 
       switch (option->has_arg) { // set the option argument value if necessary
       case no_argument:
