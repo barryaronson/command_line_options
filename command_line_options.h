@@ -25,11 +25,12 @@ int option_ID::option_ID_counter = 0x100; // leaves room for the single characte
 class option_generic : public option /* 'option' is from 'getopt.h' */ {
 public:
   option_generic(int short_option, const char *long_option, int argument_required,
-                 const char *help = 0)
-      : help_string(help), present(false),
-        option{long_option, argument_required, nullptr, short_option} {}
+                 const char *argument, const char *help)
+      : option{long_option, argument_required, nullptr, short_option},
+        argument_text(argument ? argument : ""), help_text(help ? help : ""), present(false) {}
   virtual void set_value(const char *str) = 0;
-  const char *help_string;
+  const char *argument_text;
+  const char *help_text;
   bool present;
 };
 
@@ -49,9 +50,9 @@ public:
     \return Nothing
   */
   option_description(int short_option, const char *long_option, int argument_required,
-                     T default_value, const char *help = 0)
+                     T default_value, const char *argument, const char *help)
       : option_generic((short_option == 0) ? option_ID()() : short_option, long_option,
-                       argument_required, help) {
+                       argument_required, argument, help) {
     argument_value = default_value;
   };
 
@@ -63,8 +64,9 @@ public:
       \param help Brief description of option
       \return Nothing
   */
-  option_description(int short_option, const char *long_option, const char *help = 0)
-      : option_description(short_option, long_option, no_argument, 0, help) {}
+  option_description(int short_option, const char *long_option, const char *argument,
+                     const char *help)
+      : option_description(short_option, long_option, no_argument, 0, argument, help) {}
 
   /*! \fn set_value(const char *str)
       \brief Sets the option argument value
@@ -221,12 +223,13 @@ public:
                const char *example[], const command_line &command_line_obj)
       : help_msg("") {
     // add usage
-    help_msg += "Usage:\t";
     std::filesystem::path p(argv[0]);
     if (usage) {
       for (int i = 0; usage[i]; ++i) {
-        if (i > 0) {
-          help_msg += '\t';
+        if (i == 0) {
+          help_msg += "Usage:  ";
+        } else {
+          help_msg += "        ";
         }
         help_msg += p.filename();
         help_msg += ' ';
@@ -245,9 +248,9 @@ public:
     if (example) {
       for (int i = 0; example[i]; ++i) {
         if (i == 0) {
-          help_msg += "Example:\t";
+          help_msg += "Example:  ";
         } else {
-          help_msg += '\t';
+          help_msg += "          ";
         }
         help_msg += p.filename();
         help_msg += ' ';
@@ -256,19 +259,36 @@ public:
       }
     }
 
+    size_t max_argument_width = 0;
+    for (auto v : command_line_obj.value_list) {
+      const size_t argument_width = strlen(v->name) + strlen(v->argument_text) + 2;
+      if (argument_width > max_argument_width) {
+        max_argument_width = argument_width;
+      }
+    }
+
     // add option descriptions
     help_msg += "\nMandatory arguments to long options are mandatory for short options too.\n";
     for (auto v : command_line_obj.value_list) {
+      size_t argument_width_delta =
+          max_argument_width - (strlen(v->name) + strlen(v->argument_text));
       if (v->val < 256) { // has short option
         help_msg += '-';
         help_msg += v->val;
         help_msg += ", --";
-      } else { // has long option only
+      } else {                     // has long option only
+        argument_width_delta += 4; // to accommodate for the missing short option
         help_msg += "--";
       }
+
       help_msg += v->name;
-      help_msg += v->help_string;
-      help_msg += "\n";
+      help_msg += v->argument_text;
+
+      for (size_t i = 0; i < argument_width_delta; ++i)
+        help_msg += ' ';
+
+      help_msg += v->help_text;
+      help_msg += '\n';
     }
   }
 
