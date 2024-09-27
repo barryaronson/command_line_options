@@ -4,6 +4,8 @@ CMakeCache.txt
 Makefile
 cmake_install.cmake
 clo
+html
+latex
 
 # Prerequisites
 *.d

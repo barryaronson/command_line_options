@@ -5,12 +5,6 @@
 using namespace std;
 using namespace command_line_options;
 
-void print_option(option_generic *lo) {
-  cout << "flag = " << lo->flag << "; has_arg = " << lo->has_arg
-       << "; argument_text = " << lo->argument_text << "; help_string = " << lo->help_text
-       << "; name = " << lo->name << "; present = " << lo->present << "; val = " << lo->val << endl;
-}
-
 int main(int argc, char *const argv[]) {
 
   // define the command line options
@@ -33,9 +27,9 @@ int main(int argc, char *const argv[]) {
       {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &version, &help});
 
   // create help message
-  const char *usage[] = {"[OPTION]...", nullptr};
+  const char *usage[] = {"[OPTION]...", "--help", nullptr};
   const char *description = "Test harness for 'command_line_options' classes";
-  const char *example[] = {"-n 10 -s string --double=3.141 -o4", "--help", "-vn10", nullptr};
+  const char *example[] = {"-n 10 -s string --double=3.141 -o4", "-vn10", nullptr};
   help_message help_msg(argc, argv, usage, description, example, options);
 
   if (help.present) {
@@ -51,11 +45,6 @@ int main(int argc, char *const argv[]) {
     if (version.present) {
       cout << "version = 1.0\n";
     }
-
-    auto lo = options.find_long_option(("double"));
-    print_option(lo);
-    auto so = options.find_short_option('n');
-    print_option(so);
   }
 
   return EXIT_SUCCESS;
