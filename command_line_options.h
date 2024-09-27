@@ -10,6 +10,7 @@
 
 namespace command_line_options {
 
+// \cond
 class option_ID {
 public:
   int operator()() { return option_ID_counter++; } // call operator
@@ -33,6 +34,7 @@ public:
   const char *help_text;
   bool present;
 };
+// \endcond
 
 /*! \class option_description
     \brief Represents a command line option.
@@ -51,7 +53,7 @@ public:
     \param default_value Default value of option argument
     \param argument Help text describing form of option argument
     \param help Help text giving a brief description of option
-    \return Nothing
+    \returns Nothing
   */
   option_description(int short_option, const char *long_option, int argument_required,
                      T default_value, const char *argument, const char *help)
@@ -67,7 +69,7 @@ public:
     \param long_option Long option name
     \param argument_required Either 'no_argument', 'required_argument', or 'optional_argument'
     \param default_value Default value of option argument
-    \return Nothing
+    \returns Nothing
   */
   option_description(int short_option, const char *long_option, int argument_required,
                      T default_value)
@@ -81,7 +83,7 @@ public:
     \param long_option Long option name
     \param argument Form of option argument
     \param help Brief description of option
-    \return Nothing
+    \returns Nothing
   */
   option_description(int short_option, const char *long_option, const char *argument,
                      const char *help)
@@ -91,14 +93,14 @@ public:
     \brief Represents an individual command line option with no help text and no argument.
     \param short_option Short option character or 0 for no short option
     \param long_option Long option name
-    \return Nothing
+    \returns Nothing
   */
   option_description(int short_option, const char *long_option)
       : option_description(short_option, long_option, no_argument, 0, nullptr, nullptr) {}
 
   /*! \fn get_value()
       \brief Gets the option argument value
-      \return Argument value
+      \returns Argument value
   */
   T get_value() const { return argument_value; }
 
@@ -127,7 +129,7 @@ public:
       \param argc As passed to program.
       \param argv As passed to program.
       \param values List of allowed options
-      \return Nothing
+      \returns Nothing
   */
   command_line(int argc, char *const argv[], std::initializer_list<option_base *> values)
       : value_list(values) {
@@ -226,6 +228,11 @@ private:
   std::vector<option_base *> value_list;
 };
 
+/*! \class help_message
+    \brief Builds a help message.
+    \details Builds a help message that can be used for printing when '-h' or '--help' is invoked on
+   the command line.
+*/
 class help_message {
   friend std::ostream &operator<<(std::ostream &os, const help_message &hm);
 
@@ -239,7 +246,7 @@ public:
       // Note: See class option_description for option descriptions
       \param example An array of examples terminated by a NULL pointer.
       \param values List of allowed options
-      \return Nothing
+      \returns Nothing
   */
   help_message(int argc, char *const argv[], const char *usage[], const char *description,
                const char *example[], const command_line &command_line_obj)
