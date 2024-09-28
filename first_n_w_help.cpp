@@ -1,4 +1,5 @@
-/* Example program showing how to process command line options including providing a help message.
+/*
+Example program showing how to process command line options including providing a help message.
 Compile with:
 g++ --std=c++17 -o first_n_w_help -g -O0 -Wall first_n_w_help.cpp
 */

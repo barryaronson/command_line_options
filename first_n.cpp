@@ -1,4 +1,5 @@
-/* Example program showing how to process command line options.
+/*
+Example program showing how to process command line options.
 Compile with:
 g++ --std=c++17 -o first_n -g -O0 -Wall first_n.cpp
 */                                                                                                 \

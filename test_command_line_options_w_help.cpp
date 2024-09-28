@@ -1,6 +1,6 @@
 /*
-Test harness for command_line_options. Compile with:
-g++ --std=c++17 -o clo -g -O0 -Wall test_command_line_options_w_help.cpp
+Test harness for command_line_options with help. Compile with:
+g++ --std=c++17 -o cloh -g -O0 -Wall test_command_line_options_w_help.cpp
 */
 #include "command_line_options.h"
 
