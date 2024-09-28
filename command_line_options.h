@@ -3,9 +3,6 @@
 #include <cstring>
 #include <filesystem>
 #include <getopt.h>
-#include <ostream>
-#include <sstream>
-#include <string>
 #include <vector>
 
 namespace command_line_options {
@@ -156,6 +153,12 @@ public:
     delete short_options;
   }
 
+  /*! \fn first_non_option()
+      \brief For processing command line tokens after the options
+      \returns Index to first non-option in 'argv[]' array
+  */
+  int first_non_option() const { return optind; }
+
 private:
   auto find_short_option(int short_option) const {
     for (auto v : value_list) {
@@ -208,10 +211,10 @@ private:
   void parse_options(int argc, char *const argv[], char *short_options,
                      option *long_options) const {
     int c = 0;
-    int optionIndex = 0;
+    int option_index = 0;
 
     while ((c = getopt_long(argc, argv, short_options, long_options,
-                            &optionIndex)) != -1) // -1 = end of mOptions
+                            &option_index)) != -1) // -1 = end of mOptions
     {
       auto option = find_short_option(c); // get the option description
 

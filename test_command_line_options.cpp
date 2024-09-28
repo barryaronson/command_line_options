@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include "command_line_options.h"
+
+#include <iostream>
 
 using namespace std;
 using namespace command_line_options;
