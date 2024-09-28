@@ -25,78 +25,52 @@ int option_ID::option_ID_counter = 0x100; // leaves room for the single characte
 
 class option_base : public option /* 'option' is from 'getopt.h' */ {
 public:
-  option_base(int short_option, const char *long_option, int argument_required,
-              const char *argument, const char *help)
-      : option{long_option, argument_required, nullptr, short_option},
-        argument_text(argument ? argument : ""), help_text(help ? help : ""), present(false) {}
+  option_base(int short_option, const char *long_option, int argument_required)
+      : option{long_option, argument_required, nullptr, short_option}, present(false) {}
   virtual void set_value(const char *str) = 0;
+  bool present;
+};
+
+class help_base {
+public:
+  help_base(const char *argument, const char *help)
+      : argument_text(argument ? argument : ""), help_text(help ? help : "") {}
   const char *argument_text;
   const char *help_text;
-  bool present;
 };
 // \endcond
 
-/*! \class option_description
+/*! \class option_value
     \brief Represents a command line option.
 
-    Four forms exist: with an argument and without and with help text and without. See
-    https://www.gnu.org/software/libc/manual/html_node/Getopt.html for more information.
+    Two forms exist: with an argument and without. For more information, see
+    https://www.gnu.org/software/libc/manual/html_node/Getopt.html.
 */
-template <typename T = int> class option_description : public option_base {
+template <typename T = int> class option_value : public option_base {
 public:
-  /*! \fn option_description::option_description(int short_option, const char *long_option,
-    int argument_required, T default_value, const char *argument, const char *help)
-    \brief Represents an individual command line option with help text and an optional argument.
+  /*! \fn option_value(int short_option, const char *long_option, int argument_required, T
+    default_value)
+    \brief Represents an individual command line option with an argument.
     \param short_option Short option character or 0 for no short option
     \param long_option Long option name
     \param argument_required Either 'no_argument', 'required_argument', or 'optional_argument'
     \param default_value Default value of option argument
-    \param argument Help text describing form of option argument
-    \param help Help text giving a brief description of option
     \returns Nothing
   */
-  option_description(int short_option, const char *long_option, int argument_required,
-                     T default_value, const char *argument, const char *help)
+  option_value(int short_option, const char *long_option, int argument_required, T default_value)
       : option_base((short_option == 0) ? option_ID()() : short_option, long_option,
-                    argument_required, argument, help) {
+                    argument_required) {
     argument_value = default_value;
-  };
+  }
 
-  /*! \fn option_description::option_description(int short_option, const char *long_option,
-    int argument_required, T default_value)
-    \brief Represents an individual command line option with an optional argument but no help text.
-    \param short_option Short option character or 0 for no short option
-    \param long_option Long option name
-    \param argument_required Either 'no_argument', 'required_argument', or 'optional_argument'
-    \param default_value Default value of option argument
-    \returns Nothing
-  */
-  option_description(int short_option, const char *long_option, int argument_required,
-                     T default_value)
-      : option_description(short_option, long_option, argument_required, default_value, nullptr,
-                           nullptr) {}
-
-  /*! \fn option_description::option_description(int short_option, const char *long_option,
-    const char *argument, const char *help)
-    \brief Represents an individual command line option with help text but no argument.
-    \param short_option Short option character or 0 for no short option
-    \param long_option Long option name
-    \param argument Form of option argument
-    \param help Brief description of option
-    \returns Nothing
-  */
-  option_description(int short_option, const char *long_option, const char *argument,
-                     const char *help)
-      : option_description(short_option, long_option, no_argument, 0, argument, help) {}
-
-  /*! \fn option_description::option_description(int short_option, const char *long_option)
-    \brief Represents an individual command line option with no help text and no argument.
+  /*! \fn option_value(int short_option, const char *long_option)
+    \brief Represents an individual command line option with no argument.
     \param short_option Short option character or 0 for no short option
     \param long_option Long option name
     \returns Nothing
   */
-  option_description(int short_option, const char *long_option)
-      : option_description(short_option, long_option, no_argument, 0, nullptr, nullptr) {}
+  option_value(int short_option, const char *long_option)
+      : option_value(short_option, long_option, no_argument, 0) {}
 
   /*! \fn get_value()
       \brief Gets the option argument value
@@ -112,6 +86,40 @@ private:
   T argument_value;
 };
 
+/*! \class option_description
+    \brief Represents a command line option with help text.
+
+    Four forms exist: with an argument and without and with help text and without. See
+    https://www.gnu.org/software/libc/manual/html_node/Getopt.html for more information.
+*/
+template <typename T = int> class option_description : public option_value<T>, public help_base {
+public:
+  /*! \fn option_description(int short_option, const char *long_option, int argument_required, T
+    default_value, const char *argument, const char *help) \brief Represents an individual command
+    line option with help text and an optional argument. \param short_option Short option character
+    or 0 for no short option \param long_option Long option name \param argument_required Either
+    'no_argument', 'required_argument', or 'optional_argument' \param default_value Default value of
+    option argument \param argument Help text describing form of option argument \param help Help
+    text giving a brief description of option \returns Nothing
+  */
+  option_description(int short_option, const char *long_option, int argument_required,
+                     T default_value, const char *argument, const char *help)
+      : option_value<T>(short_option, long_option, argument_required, default_value),
+        help_base(argument, help) {};
+
+  /*! \fn option_description(int short_option, const char *long_option, const char *argument, const
+    char *help) \brief Represents an individual command line option with help text but no argument.
+    \param short_option Short option character or 0 for no short option
+    \param long_option Long option name
+    \param argument Form of option argument
+    \param help Brief description of option
+    \returns Nothing
+  */
+  option_description(int short_option, const char *long_option, const char *argument,
+                     const char *help)
+      : option_description(short_option, long_option, no_argument, 0, argument, help) {}
+};
+
 class help_message;
 
 /*! \class command_line
@@ -124,7 +132,7 @@ class command_line {
   friend help_message;
 
 public:
-  /*! \fn command_line::command_line()
+  /*! \fn command_line()
       \brief Parses command line tokens and interprets values.
       \param argc As passed to program.
       \param argv As passed to program.
@@ -237,20 +245,20 @@ class help_message {
   friend std::ostream &operator<<(std::ostream &os, const help_message &hm);
 
 public:
-  /*! \fn command_line::command_line()
-      \brief Parses command line tokens and interprets values.
+  /*! \fn help_message()
+      \brief Generates a help message.
       \param argc As passed to program.
       \param argv As passed to program.
       \param usage An array of usages without the program name terminated by a NULL pointer.
       \param description Displayed after usages.
-      // Note: See class option_description for option descriptions
       \param example An array of examples terminated by a NULL pointer.
-      \param values List of allowed options
+      \param command_line The 'command_line' object used to process command line options
       \returns Nothing
   */
   help_message(int argc, char *const argv[], const char *usage[], const char *description,
                const char *example[], const command_line &command_line_obj)
       : help_msg("") {
+
     // add usage
     std::filesystem::path p(argv[0]);
     if (usage) {
@@ -288,9 +296,14 @@ public:
       }
     }
 
+    // calculate maximum argument width for formatting
     size_t max_argument_width = 0;
     for (auto v : command_line_obj.value_list) {
-      const size_t argument_width = strlen(v->name) + strlen(v->argument_text) + 2;
+      const help_base *o = dynamic_cast<help_base *>(v);
+      if (o == nullptr) { // this is only done for the first time (here)
+        throw std::runtime_error("Option description does not contain help text.\n");
+      }
+      const size_t argument_width = strlen(v->name) + strlen(o->argument_text) + 2;
       if (argument_width > max_argument_width) {
         max_argument_width = argument_width;
       }
@@ -299,8 +312,9 @@ public:
     // add option descriptions
     help_msg += "\nMandatory arguments to long options are mandatory for short options too.\n";
     for (auto v : command_line_obj.value_list) {
+      const help_base *o = dynamic_cast<help_base *>(v); // tested above; will still be safe
       size_t argument_width_delta =
-          max_argument_width - (strlen(v->name) + strlen(v->argument_text));
+          max_argument_width - (strlen(v->name) + strlen(o->argument_text));
       if (v->val < 256) { // has short option
         help_msg += '-';
         help_msg += v->val;
@@ -311,22 +325,33 @@ public:
       }
 
       help_msg += v->name;
-      help_msg += v->argument_text;
+      help_msg += o->argument_text;
 
       for (size_t i = 0; i < argument_width_delta; ++i)
         help_msg += ' ';
 
-      help_msg += v->help_text;
+      help_msg += o->help_text;
       help_msg += '\n';
     }
   }
 
+  /*! \fn help()
+      \brief Gets the constructed help message.
+      \returns Help message
+  */
   std::string &help() { return help_msg; }
 
 private:
   std::string help_msg;
 };
 
+/*! \fn operator<<(std::ostream &os, help_message &hm)
+    \brief Outputs the constructed help message to an 'ostream' object.
+    \param os 'ostream' object
+    \param hm 'help_message' object
+    \returns 'ostream' object with help message
+    \example std::cout << help // where 'help' is an object of type 'help_message'
+*/
 std::ostream &operator<<(std::ostream &os, help_message &hm) {
   os << hm.help();
   return os;
