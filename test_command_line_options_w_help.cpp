@@ -1,6 +1,10 @@
-#include <iostream>
-
+/*
+Test harness for command_line_options. Compile with:
+g++ --std=c++17 -o clo -g -O0 -Wall test_command_line_options_w_help.cpp
+*/
 #include "command_line_options.h"
+
+#include <iostream>
 
 using namespace std;
 using namespace command_line_options;
@@ -26,14 +30,13 @@ int main(int argc, char *const argv[]) {
       argc, argv,
       {&int_arg, &string_arg, &double_arg, &opt_int_arg, &int_arg_long_only, &version, &help});
 
-  // create help message
-  const char *usage[] = {"[OPTION]...", "--help", nullptr};
-  const char *description = "Test harness for 'command_line_options' classes";
-  const char *example[] = {"-n 10 -s string --double=3.141 -o4", "-vn10", nullptr};
-  help_message help_msg(argc, argv, usage, description, example, options);
-
   if (help.present) {
-    cout << help_msg << endl;
+    // create help message
+    const char *usage[] = {"[OPTION]...", "--help", nullptr};
+    const char *description = "Test harness for 'command_line_options' classes";
+    const char *example[] = {"-n 10 -s string --double=3.141 -o4", "-vn10", nullptr};
+    help_message help_msg(argc, argv, usage, description, example, options);
+    cout << help_msg << endl; // display help
     //  add license info and other if necessary
   } else {
     cout << "int_arg = " << int_arg.get_value() << endl;
